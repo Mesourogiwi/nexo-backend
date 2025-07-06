@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE `rating` MODIFY `upvote` INTEGER NOT NULL DEFAULT 0,
-    MODIFY `downvote` INTEGER NOT NULL DEFAULT 0;

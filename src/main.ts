@@ -17,11 +17,11 @@ async function bootstrap() {
         .setTitle('Nexo API specification')
         .setDescription('The nexo project')
         .setVersion('0.1.0')
-        .addTag('acessibility')
+        .addBearerAuth()
         .build()
 
     const documentFactory = () => SwaggerModule.createDocument(app, config)
     SwaggerModule.setup('api', app, documentFactory)
-    await app.listen(process.env.PORT ?? 3000)
+    await app.listen(process.env.PORT ?? 3000, '0.0.0.0')
 }
 bootstrap()

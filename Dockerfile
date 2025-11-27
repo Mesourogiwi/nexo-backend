@@ -31,6 +31,8 @@ RUN npx prisma generate
 # Copy application code
 COPY . .
 
+COPY .env .env
+
 # Build application
 RUN npm run build
 

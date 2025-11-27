@@ -3,13 +3,49 @@ import {CreateRatingDto} from './dto/create-rating.dto'
 import {UpdateRatingDto} from './dto/update-rating.dto'
 import {PrismaService} from '../../prisma/prisma.service'
 import {Rating} from '@prisma/client'
+import {S3Service} from 'src/s3/s3.service'
+import {Multer} from 'multer'
 
+type CreateRatingParams = CreateRatingDto & {userId: string; file?: Multer.File}
 @Injectable()
 export class RatingService {
-    constructor(private readonly prisma: PrismaService) {}
-    async create(createRatingDto: CreateRatingDto): Promise<Rating> {
-        const rating = await this.prisma.rating.create({data: createRatingDto})
-        return rating
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly s3Service: S3Service
+    ) {}
+    async create(createRatingDto: CreateRatingParams): Promise<Rating> {
+        const transaction = await this.prisma.$transaction(async prisma => {
+            const point = await prisma.point.create({
+                data: {
+                    latitude: createRatingDto.latitude,
+                    longitude: createRatingDto.longitude,
+                    type: createRatingDto.ratingType
+                }
+            })
+
+            let fileUrl: string | null = null
+
+            if (createRatingDto.file) {
+                const uploadResult = await this.s3Service.uploadFile(
+                    createRatingDto.file,
+                    'ratings'
+                )
+                fileUrl = uploadResult.url
+            }
+            const rating = await prisma.rating.create({
+                data: {
+                    debility: createRatingDto.debility,
+                    description: createRatingDto.description,
+                    ratingType: createRatingDto.ratingType,
+                    pointId: point.id,
+                    fileUrl,
+                    userId: createRatingDto.userId
+                }
+            })
+            return rating
+        })
+
+        return transaction
     }
 
     async findAll(): Promise<Rating[]> {
@@ -32,9 +68,9 @@ export class RatingService {
         if (!rating) {
             throw new NotFoundException('Rating not found')
         }
-        await this.prisma.rating.update({where: {id}, data: updateRatingDto})
+        const updatedRating = await this.prisma.rating.update({where: {id}, data: updateRatingDto})
 
-        return rating
+        return updatedRating
     }
 
     async remove(id: string) {

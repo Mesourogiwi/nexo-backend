@@ -1,5 +1,5 @@
 import {IsEmail, IsEnum, IsNotEmpty, IsString} from 'class-validator'
-import {UserType} from '@prisma/client'
+import {UserRole} from '@prisma/client'
 import {ApiProperty} from '@nestjs/swagger'
 
 export class CreateUserDto {
@@ -21,7 +21,7 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     @IsString()
-    @IsEnum(UserType)
+    @IsEnum(UserRole)
     @ApiProperty()
-    type: UserType
+    role: UserRole
 }
